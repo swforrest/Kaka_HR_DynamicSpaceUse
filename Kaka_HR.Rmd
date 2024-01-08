@@ -56,15 +56,15 @@ Create an extent raster to be used for each individual. It is important to keep 
 
 ```{r set_extent, linewidth = 60}
 
-ext_dbbmm <- as(extent(1390000, 1435000, 4910000, 4950000), 'SpatialPolygons')
-crs(ext_dbbmm) <- "EPSG:2193"
-ext_raster <- raster::raster(ext_dbbmm, res = 25) # resolution in m
+ext_object <- as(extent(1390000, 1435000, 4910000, 4950000), 'SpatialPolygons')
+crs(ext_object) <- "EPSG:2193"
+ext_raster <- raster::raster(ext_object, res = 25) # resolution in m
 
 ```
 
 Using the ctmm package 
 
-```{r}
+```{r fitting ctmm}
 
 tag_ctmm_list <- vector(mode = "list", length = 10) 
 # FIT1_ML_list <- vector(mode = "list", length = 10) 
@@ -87,7 +87,7 @@ tag_ctmm_list[[i]] <- as.telemetry(tag, timezone = "GMT",
                                              "+k=0.9996 +x_0=1600000 +y_0=10000000 ",
                                              "+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 ",
                                              "+units=m +no_defs +type=crs"))
-plot(tag_ctmm_list[[i]])
+# plot(tag_ctmm_list[[i]])
 
 level <- 0.95 # we want to display 95% confidence intervals
 SVF <- variogram(tag_ctmm_list[[i]])
@@ -136,9 +136,9 @@ plot(SVF, CTMM = FIT1_pHREML_list[[i]][[1]], fraction = 1,
                    " - ID ", tag_ctmm_list[[i]]@info$identity))
 
 # to view zoomed in plot to assess fit 
-plot(SVF, CTMM = FIT1_pHREML_list[[i]][[1]], fraction = 0.02,
-     main = paste0("pHREML - ", rownames(summary(FIT1_pHREML_list[[i]]))[1],
-                   " - ID ", tag_ctmm_list[[i]]@info$identity))
+# plot(SVF, CTMM = FIT1_pHREML_list[[i]][[1]], fraction = 0.02,
+#      main = paste0("pHREML - ", rownames(summary(FIT1_pHREML_list[[i]]))[1],
+#                    " - ID ", tag_ctmm_list[[i]]@info$identity))
 
 # Fitting home range model
 
@@ -255,15 +255,15 @@ ggplot() +
 
 filetypes <- c("pdf", "tiff", "png")
 
-# for(i in 1:length(filetypes)) {
-# ggsave(filename = paste0("Graphical outputs/",
-#                        "all_home_ranges_wAKDE_young_old_20230529.",
-#                        filetypes[i]),
-#        width = 160,
-#        height = 125,
-#        units = "mm",
-#        dpi = 300)
-# }
+for(i in 1:length(filetypes)) {
+ggsave(filename = paste0("Graphical outputs/",
+                       "all_home_ranges_wAKDE_young_old_", Sys.Date(), ".",
+                       filetypes[i]),
+       width = 160,
+       height = 125,
+       units = "mm",
+       dpi = 300)
+}
 
 ```
 
@@ -289,12 +289,14 @@ Add additional information about each kākā and create data frame
 
 id <- 45505:45514
 age <- c(1, 10, 5, 1, 3, 2, 2, 3, 10, 8)
+familiarity <- c(1, 10, 5, 1, 3, 2, 2, 3, 1, 8)
 sex <- c("M", "M", "M", "F", "F", "F", "F", "M", "M", "F")
 origin <- c("Orokonui", "Orokonui", "Captive", "Orokonui", "Orokonui", "Orokonui", 
             "Orokonui",  "Captive", "Captive", "Orokonui")
 
 all_contours_95_df <- data.frame("ID" = id, 
                                  "Age" = age, 
+                                 "Familiarity" = familiarity,
                                  "Sex" = sex,
                                  "Origin" = origin,
                                  "UD50_area" = UD_ctmm_area_50, 
@@ -322,34 +324,40 @@ Plot
 all_contours_95_df %>% ggplot(aes(Age, UD95_area_km2)) +
   geom_point(alpha = 0.5, size = 3) +
   scale_x_continuous(breaks = c(1:10)) +
-  labs(y = expression(paste("AKDE UD95 Area   ", (km^2)))) +
+  labs(y = expression(HR[95]~area~(km^2))) +
+  theme_classic()
+
+all_contours_95_df %>% ggplot(aes(Familiarity, UD95_area_km2)) +
+  geom_point(alpha = 0.5, size = 3) +
+  scale_x_continuous(breaks = c(1:10)) +
+  labs(y = expression(HR[95]~area~(km^2))) +
   theme_classic()
 
 sexplot <- all_contours_95_df %>% ggplot(aes(Sex, UD95_area_km2)) +
-  # geom_boxplot(alpha = 0.25, fill = "skyblue") +
-  geom_violin(alpha = 0.25, fill = "skyblue") +
-  geom_jitter(width = 0.15, size = 3, alpha = 0.5) +
-  labs(y = expression(paste("AKDE UD95 Area   ", (km^2)))) +
+  geom_boxplot(alpha = 0.25, fill = "skyblue") +
+  # geom_violin(alpha = 0.25, fill = "skyblue") +
+  geom_jitter(width = 0.05, size = 3, alpha = 0.5) +
+  labs(y = expression(HR[95]~area~(km^2))) +
   theme_classic()
 
 originplot <- all_contours_95_df %>% ggplot(aes(Origin, UD95_area_km2)) +
-  # geom_boxplot(alpha = 0.25, fill = "skyblue") +
-  geom_violin(alpha = 0.25, fill = "skyblue") +
-  geom_jitter(width = 0.15, size = 3, alpha = 0.5) +
+  geom_boxplot(alpha = 0.25, fill = "skyblue") +
+  # geom_violin(alpha = 0.25, fill = "skyblue") +
+  geom_jitter(width = 0.05, size = 3, alpha = 0.5) +
   theme_classic()
 
 ggarrange(sexplot, originplot + rremove("ylab"))
 
 # save objects in multiple filetypes
-# for(i in 1:length(filetypes)){
-# ggsave(filename = paste0("Graphical outputs/",
-#                        "sex_age_plots_20230522.",
-#                        filetypes[i]),
-#        width = 160,
-#        height = 100,
-#        units = "mm",
-#        dpi = 300)
-# }
+for(i in 1:length(filetypes)){
+ggsave(filename = paste0("Graphical outputs/",
+                       "sex_age_plots_", Sys.Date(), ".",
+                       filetypes[i]),
+       width = 160,
+       height = 100,
+       units = "mm",
+       dpi = 300)
+}
 
 ```
 
@@ -362,6 +370,7 @@ Fit the models
 
 # four models used for model selection
 area_age_glm <- glm(UD95_area_km2 ~ Age, data = all_contours_95_df, family = Gamma(link = "log"))
+area_familiarity_glm <- glm(UD95_area_km2 ~ Familiarity, data = all_contours_95_df, family = Gamma(link = "log"))
 area_sex_glm <- glm(UD95_area_km2 ~ Sex, data = all_contours_95_df, family = Gamma(link = "log"))
 area_origin_glm <- glm(UD95_area_km2 ~ Origin, data = all_contours_95_df, family = Gamma(link = "log"))
 area_null_glm <- glm(UD95_area_km2 ~ 1, data = all_contours_95_df, family = Gamma(link = "log"))
@@ -378,6 +387,19 @@ AIC(area_age_glm)
 anova(area_age_glm,test="F")
 r.squaredLR(area_age_glm)
 confint(area_age_glm)
+
+```
+
+Model summaries of familiarity model
+
+```{r}
+
+# model with age
+summary(area_familiarity_glm)
+AIC(area_familiarity_glm) 
+anova(area_familiarity_glm,test="F")
+r.squaredLR(area_familiarity_glm)
+confint(area_familiarity_glm)
 
 ```
 
@@ -465,21 +487,85 @@ area_age_glm_plot <- effect_plot(area_age_glm,
                                  point.size = 2.5, 
                                  point.alpha = 0.5) +
   scale_x_continuous("Age", breaks = c(1:10)) +
-  ylab(expression(UD[95]~area~(km^2))) +
+  ylab(expression(HR[95]~area~(km^2))) +
   theme_classic() +
   theme(axis.title.y = element_text(margin = margin(r = 10)))
 
 area_age_glm_plot
 
-# for(i in 1:length(filetypes)){
-# ggsave(filename = paste0("Graphical outputs/",
-#                        "age_area_glm_20230522.",
-#                        filetypes[i]),
-#        width = 160,
-#        height = 100,
-#        units = "mm",
-#        dpi = 300)
-# }
+for(i in 1:length(filetypes)){
+ggsave(filename = paste0("Graphical outputs/",
+                       "age_area_glm_", Sys.Date(), ".",
+                       filetypes[i]),
+       width = 160,
+       height = 100,
+       units = "mm",
+       dpi = 300)
+}
+
+```
+
+Also checking the for familiarity
+
+```{r}
+
+dfun <- function(object) {
+  with(object,sum((weights * residuals^2)[weights > 0])/df.residual)
+}
+
+dfun(area_familiarity_glm)
+pseudoR2 <- 1 - (area_familiarity_glm$deviance / area_familiarity_glm$null.deviance)
+pseudoR2
+
+qr.area_familiarity_glm <- qresid(area_familiarity_glm)
+qqnorm(qr.area_familiarity_glm, las = 1)
+qqline(qr.area_familiarity_glm)
+
+r<-residuals(area_familiarity_glm,type="pearson")
+modfit<-fitted(area_familiarity_glm)
+
+plot(r~modfit, main = "Pearson's Residuals")
+
+par(mfrow=c(1,2)) # change plot window to accommodate 2 plots
+
+r = rstandard(area_familiarity_glm)
+lf <- fitted(area_familiarity_glm)
+plot(all_contours_95_df$Age, r,xlab="Familiarity (years)",
+     ylab="Standardized residual")
+abline(h=0)
+
+plot(lf, r,xlab="Fitted values",ylab="Standardized residual")
+abline(h=0)
+
+h <- hatvalues(area_familiarity_glm)
+cd <- cooks.distance(area_familiarity_glm)
+plot(h,cd,xlab="Hat values",ylab="Cook's distance")
+
+par(mfrow=c(1,1)) # return to single plotting
+
+area_familiarity_glm_plot <- effect_plot(area_familiarity_glm, 
+                                 pred = Familiarity, 
+                                 plot.points = T, 
+                                 interval = T, 
+                                 point.size = 2.5, 
+                                 point.alpha = 0.5) +
+  scale_x_continuous("Familiarity (years)", breaks = c(1:10)) +
+  ylab(expression(HR[95]~area~(km^2))) +
+  theme_classic() +
+  theme(axis.title.y = element_text(margin = margin(r = 10)))
+
+area_familiarity_glm_plot
+
+
+for(i in 1:length(filetypes)){
+ggsave(filename = paste0("Graphical outputs/",
+                       "age_familiarity_glm_", Sys.Date(), ".",
+                       filetypes[i]),
+       width = 160,
+       height = 100,
+       units = "mm",
+       dpi = 300)
+}
 
 ```
 
@@ -488,10 +574,10 @@ For checking the overlap between the fence of Orokonui and each UD. This calcula
 ```{r}
 
 raster_UD_list <- map(UD1w_pHREML_list, raster, DF = "PMF")
-for(i in 1:10) raster::plot(raster_UD_list[[i]])
+# for(i in 1:10) raster::plot(raster_UD_list[[i]])
 
 # checking that the cell values add up to 1
-for(i in 1:10) print(cellStats(raster_UD_list[[i]], sum))
+# for(i in 1:10) print(cellStats(raster_UD_list[[i]], sum))
 
 # testing for a single UD
 plot(mask(raster_UD_list[[1]], OrokonuiFence))
@@ -508,7 +594,7 @@ print(inside_overlap[[i]])
 all_contours_95_df <- all_contours_95_df %>% 
   mutate(inside = inside_overlap, outside = 1 - inside_overlap)
 
-head(all_contours_95_df)
+all_contours_95_df
 
 max(all_contours_95_df$UD95_area_km2) / min(all_contours_95_df$UD95_area_km2)
 
@@ -521,9 +607,11 @@ all_contours_95_df %>% group_by(age_group) %>% summarise(mean_UD50km2 = mean(UD5
 
 all_contours_95_df %>% summarise(mean_UD50km2 = mean(UD50_area_km2), 
                                  mean_UD95km2 = mean(UD95_area_km2),
+                                 meanUD_inside = mean(inside),
                                  meanUD_outside = mean(outside),
                                  sd_UD50km2 = sd(UD50_area_km2), 
                                  sd_UD95km2 = sd(UD95_area_km2),
+                                 sdUD_inside = sd(inside),
                                  sdUD_outside = sd(outside))
 
 ```
@@ -536,7 +624,7 @@ all_contours_95_df %>% ggplot(aes(x = age, y = outside)) +
   geom_point(size = 2.5, alpha = 0.5) +
   scale_x_continuous(breaks = c(1:10), "Age") +
   scale_y_continuous(breaks = seq(0,1,0.2), limits = c(0,1), 
-                     "Proportion of UD Outside of Orokonui Ecosanctaury") +
+                     "Proportion of HR Outside of Orokonui Ecosanctaury") +
   theme_classic() +
   theme(axis.title.y = element_text(margin = margin(r = 10)))
 
@@ -597,7 +685,7 @@ outsideglmplot <- effect_plot(outsideglm,
                               point.size = 2.5, 
                               point.alpha = 0.5) +
   scale_x_continuous(breaks = c(1:10)) +
-  labs(x = "Age", y = "Proportion of UD Outside of Orokonui") +
+  labs(x = "Age", y = "Proportion of HR Outside of Orokonui") +
   theme_classic() +
   theme(axis.title.y = element_text(margin = margin(r = 10)))
 
@@ -605,17 +693,34 @@ outsideglmplot
 
 ggarrange(area_age_glm_plot, outsideglmplot, labels = "AUTO", label.x = 0.55)
 
-# for(i in 1:length(filetypes)) {
-# ggsave(filename = paste0("Graphical outputs/",
-#                        "age_area_overlap_glms_20230529.",
-#                        filetypes[i]),
-#        width = 160,
-#        height = 75,
-#        units = "mm",
-#        dpi = 300)
-# }
+for(i in 1:length(filetypes)) {
+ggsave(filename = paste0("Graphical outputs/",
+                       "age_area_overlap_glms_", Sys.Date(), ".",
+                       filetypes[i]),
+       width = 160,
+       height = 100,
+       units = "mm",
+       dpi = 300)
+}
 
 ```
+
+```{r}
+
+ggarrange(area_age_glm_plot, area_familiarity_glm_plot, labels = "AUTO", label.x = 0.55)
+
+for(i in 1:length(filetypes)) {
+ggsave(filename = paste0("Graphical outputs/",
+                       "age_area_familiarity_glms_", Sys.Date(), ".",
+                       filetypes[i]),
+       width = 160,
+       height = 100,
+       units = "mm",
+       dpi = 300)
+}
+
+```
+
 
 ### References
 
