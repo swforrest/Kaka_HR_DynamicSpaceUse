@@ -3,7 +3,7 @@ Data and code from paper assessing home ranges and space use variability of kāk
 
 The paper can be found at: [https://conbio.onlinelibrary.wiley.com/doi/10.1111/csp2.13119](https://conbio.onlinelibrary.wiley.com/doi/10.1111/csp2.13119).
 
-Citation:
+**Citation**
 
 - Forrest, S. W., Rodríguez-Recio, M., & Seddon, P. J. (2024). Home range and dynamic space use reveals age-related differences in risk exposure for reintroduced parrots. Conservation Science and Practice, e13119. https://doi.org/10.1111/csp2.13119
 
